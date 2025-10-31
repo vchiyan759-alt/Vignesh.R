@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Login - Admin Portal</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-gradient">
+
+<div class="auth-container fade-in">
+  <h2>Welcome Back 👋</h2>
+  <p class="subtext">Login to access your admin dashboard</p>
+
+  <input id="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+
+  <button id="loginBtn" class="btn-primary">Login</button>
+  <p id="msg" class="error"></p>
+
+  <small class="hint">Default: admin@example.com / admin123</small>
+</div>
+
+<script>
+const API = "http://localhost:5000/api";
+
+document.getElementById("loginBtn").onclick = async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch(`${API}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    location.href = "dashboard.html";
+  } else {
+    document.getElementById("msg").innerText = data.message || "Login failed";
+  }
+};
+</script>
+</body>
+</html>

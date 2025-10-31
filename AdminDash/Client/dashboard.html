@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard</title>
+
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray">
+
+<header class="nav">
+  <h2>📊 Analytics Dashboard</h2>
+  <div class="nav-right">
+    <span id="userName"></span>
+    <button id="logoutBtn" class="btn-secondary">Logout</button>
+  </div>
+</header>
+
+<section class="cards fade-in">
+  <div class="card glass"><h3>👥 Users</h3><p id="usersCount">-</p></div>
+  <div class="card glass"><h3>💰 Sales</h3><p id="salesCount">-</p></div>
+  <div class="card glass"><h3>👁️ Views</h3><p id="viewsCount">-</p></div>
+</section>
+
+<div class="chart-card glass fade-in">
+  <h3>📈 Sales & Views (30 days)</h3>
+  <canvas id="chartCanvas"></canvas>
+</div>
+
+<script>
+const API = "http://localhost:5000/api";
+const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+if (!token) location.href = "index.html";
+document.getElementById("userName").innerText = "Hi, " + user.name;
+
+// Logout
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.clear();
+  location.href = "index.html";
+};
+
+async function fetchMetrics() {
+  const res = await fetch(`${API}/dashboard/stats`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    localStorage.clear();
+    return location.href = "index.html";
+  }
+
+  return await res.json();
+}
+
+let chart;
+function renderChart(labels, sales, views) {
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById("chartCanvas"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Sales", data: sales, borderWidth: 3, tension: 0.3 },
+        { label: "Views", data: views, borderWidth: 3, tension: 0.3 }
+      ]
+    },
+    options: { responsive: true }
+  });
+}
+
+async function loadDashboard() {
+  const data = await fetchMetrics();
+
+  document.getElementById("usersCount").innerText = data.usersCount;
+  document.getElementById("salesCount").innerText = data.totalSales;
+  document.getElementById("viewsCount").innerText = data.totalViews;
+
+  const labels = data.salesGraph.map((_, i) => `Day ${i+1}`);
+  renderChart(labels, data.salesGraph, data.viewsGraph);
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
